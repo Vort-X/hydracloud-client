@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HydraClassLibrary", "..\..\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HydraClient", "HydraClient\HydraClient.csproj", "{60C85662-D47F-4A9B-9D39-B0B7C158F022}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XmlTcpSerializables", "..\..\CSharp\HydraServer\XmlTcpSerializables\XmlTcpSerializables.csproj", "{EEC51257-A94C-4187-83D3-4F3FD4920695}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{60C85662-D47F-4A9B-9D39-B0B7C158F022}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{60C85662-D47F-4A9B-9D39-B0B7C158F022}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{60C85662-D47F-4A9B-9D39-B0B7C158F022}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EEC51257-A94C-4187-83D3-4F3FD4920695}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EEC51257-A94C-4187-83D3-4F3FD4920695}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EEC51257-A94C-4187-83D3-4F3FD4920695}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EEC51257-A94C-4187-83D3-4F3FD4920695}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
