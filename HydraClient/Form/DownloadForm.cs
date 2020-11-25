@@ -1,26 +1,15 @@
-﻿using HydraClassLibrary.ClientEntities;
-using System;
+﻿using System;
 using System.Windows.Forms;
 
 namespace HydraClient
 {
     public partial class DownloadForm : Form
     {
-        private readonly ClientUser currentUser;
-        private readonly string owner;
-        private readonly object fileOrFolder;
-        private readonly Type type;
+        private readonly string source;
 
-        public DownloadForm(ClientUser currentUser, string owner, object fileOrFolder, Type type)
+        public DownloadForm(string source)
         {
-            this.currentUser = currentUser;
-            this.owner = owner;
-            this.fileOrFolder = fileOrFolder;
-            this.type = type;
-            if (type.Equals(typeof(ClientFolder)))
-                Text += " " + ((ClientFolder) fileOrFolder)?.Name;
-            if (type.Equals(typeof(ClientFile)))
-                Text += " " + ((ClientFile) fileOrFolder)?.Name;
+            this.source = source;
             InitializeComponent();
         }
 
@@ -39,10 +28,7 @@ namespace HydraClient
             }
             else
             {
-                if (type.Equals(typeof(ClientFolder))) 
-                    Program.cloudConnection.DownloadFolder(currentUser, owner, (ClientFolder)fileOrFolder, folderBrowserDialog.SelectedPath + "\\");
-                if (type.Equals(typeof(ClientFile)))
-                    Program.cloudConnection.DownloadFile(currentUser, owner, (ClientFile)fileOrFolder, folderBrowserDialog.SelectedPath + "\\");
+                Program.sessionInfo.Download(source, folderBrowserDialog.SelectedPath);
             }
             Close();
         }

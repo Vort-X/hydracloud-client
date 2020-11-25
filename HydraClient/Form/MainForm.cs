@@ -1,6 +1,5 @@
-﻿using HydraClassLibrary;
-using HydraClassLibrary.ClientEntities;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace HydraClient
@@ -9,6 +8,7 @@ namespace HydraClient
     {
         private readonly ToolStripItem[] fileOrFolderStrip;
         private readonly ToolStripItem[] listViewStrip;
+        private readonly Dictionary<ListViewItem, string> idDictionary;
 
         public MainForm()
         {
@@ -27,51 +27,48 @@ namespace HydraClient
                 createFolderToolStripMenuItem,
                 pasteToolStripMenuItem,
                 refreshToolStripMenuItem};
+
+            idDictionary = new Dictionary<ListViewItem, string>();
         }
 
-        public void RefreshListView()
+        public void RefreshListView() //fix SubItems.Add()
         {
             if (Program.sessionInfo.CurrentFolder != null)
             {
                 Program.sessionInfo.ReloadFolder();
                 folderListView.Items.Clear();
-                ClientFolder currentFolder = Program.sessionInfo.CurrentFolder;
-                if (currentFolder.ChildFolders != null)
-                foreach (var folder in currentFolder.ChildFolders)
-                {
-                    ListViewItem listItem = new ListViewItem(folder);
-                    listItem.SubItems.Add("Folder");
-                    folderListView.Items.Add(listItem);
+                idDictionary.Clear();
+                var currentFolder = Program.sessionInfo.CurrentFolder;
+                if (currentFolder.childFolders != null)
+                    foreach (var folder in currentFolder.childFolders)
+                    {
+                        ListViewItem listItem = new ListViewItem(folder.name);
+                        listItem.SubItems.Add("Folder");
+                        folderListView.Items.Add(listItem);
+                        idDictionary.Add(listItem, folder.guid);
                     }
-                if (currentFolder.Files != null)
-                    foreach (var file in currentFolder.Files)
-                {
-                    ListViewItem listItem = new ListViewItem(file);
-                    listItem.SubItems.Add("File");
-                    folderListView.Items.Add(listItem);
-                }
-                string owner = Program.sessionInfo.CurrentFolder.Owner;
-                currentLocationTextBox.Text = owner + ":" + currentFolder.FullPath;
-                userTextBox.Text = Program.sessionInfo.CurrentUser.Login;
+                if (currentFolder.files != null)
+                    foreach (var file in currentFolder.files)
+                    {
+                        ListViewItem listItem = new ListViewItem(file.name);
+                        listItem.SubItems.Add("File");
+                        folderListView.Items.Add(listItem);
+                        idDictionary.Add(listItem, file.guid);
+                    }
+                string owner = Program.sessionInfo.CurrentFolder.data.owner;
+                currentLocationTextBox.Text = owner + ":" + currentFolder.data.name;
+                userTextBox.Text = Program.sessionInfo.Login;
             }
-        }
-        public void EnableFolderListView()
-        {
-            folderListView.Enabled = true;
         }
 
         #region Forms
-
         private void LoginToolStripMenuItem_Click(object sender, System.EventArgs e)
         {
-            folderListView.Enabled = false;
             new LoginForm().Show();
         }
         private void RegisterToolStripMenuItem_Click(object sender, System.EventArgs e)
         {
-            folderListView.Enabled = false;
             new RegisterForm().Show();
-            
         }
         private void AboutToolStripMenuItem_Click(object sender, System.EventArgs e)
         {
@@ -83,75 +80,35 @@ namespace HydraClient
         }
         private void UploadFileButton_Click(object sender, EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null)
-            {
-                var up = Program.sessionInfo.CurrentFolder;
-                var user = Program.sessionInfo.CurrentUser;
-                var owner = Program.sessionInfo.CurrentFolder.Owner;
-                Type type = typeof(ClientFile);
-                var uf = new UploadForm(user, owner, up, type);
-                uf.Show();
-            }
+            if (Program.sessionInfo.CurrentFolder != null) new UploadForm(Program.sessionInfo.CurrentFolder.data.guid, "file").Show();
         }
         private void UploadFolderButton_Click(object sender, EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null)
-            {
-                var up = Program.sessionInfo.CurrentFolder;
-                var user = Program.sessionInfo.CurrentUser;
-                var owner = Program.sessionInfo.CurrentFolder.Owner;
-                Type type = typeof(ClientFolder);
-                var uf = new UploadForm(user, owner, up, type);
-                uf.Show();
-            }
+            if (Program.sessionInfo.CurrentFolder != null) new UploadForm(Program.sessionInfo.CurrentFolder.data.guid, "folder").Show();
         }
-
+        // A voobsche nahui etu upload formu nado ubrat
         #endregion
 
         private void CreateFolderButton_Click(object sender, System.EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null)
-            {
-                Program.cloudConnection.CreateFolder(
-                    Program.sessionInfo.CurrentUser,
-                    Program.sessionInfo.CurrentFolder.Owner,
-                    Program.sessionInfo.CurrentFolder);
-                RefreshListView();
-            }
+            Program.sessionInfo.CreateFolder();
+            RefreshListView();
         }
         private void FolderListView_DoubleClick(object sender, System.EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null)
+            if (Program.sessionInfo.CurrentFolder != null && folderListView.SelectedItems.Count == 1)
             {
-                string selected = "";
-                if (Program.sessionInfo.CurrentFolder.Owner == null && Program.sessionInfo.CurrentFolder.Name == "Sharings")
-                {
-                    if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "Folder")
-                    {
-                        selected = folderListView.SelectedItems[0].Text;
-                        int pos = selected.IndexOf(':');
-                        Program.sessionInfo.LoadFolder(selected.Substring(0, pos), selected.Substring(pos + 1));
-                    }
-                    return;
-                }
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "Folder")
-                {
-                    selected = folderListView.SelectedItems[0].Text + "\\";
-                }
-                Program.sessionInfo.LoadFolder(Program.sessionInfo?.CurrentFolder?.Owner, Program.sessionInfo?.CurrentFolder?.FullPath + selected);
+                Program.sessionInfo.LoadFolder(idDictionary[folderListView.SelectedItems[0]]);
                 RefreshListView();
             }
         }
         private void BackButton_Click(object sender, System.EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder.Owner == null && Program.sessionInfo.CurrentFolder.Name == "Sharings")
+            if (Program.sessionInfo.CurrentFolder != null)
             {
-                Program.sessionInfo.LoadFolder(Program.sessionInfo?.CurrentUser.Login, "root\\");
+                Program.sessionInfo.LoadFolder(Program.sessionInfo?.CurrentFolder?.data?.parentId);
                 RefreshListView();
-                return;
             }
-            Program.sessionInfo.LoadFolder(Program.sessionInfo?.CurrentFolder?.Owner, Program.sessionInfo?.CurrentFolder?.ParentPath);
-            RefreshListView();
         }
         private void FolderListViewContextMenuStrip_Opening(object sender, System.ComponentModel.CancelEventArgs e)
         {
@@ -159,221 +116,58 @@ namespace HydraClient
             {
                 FolderListViewContextMenuStrip.Items.Clear();
                 if (folderListView.SelectedItems.Count == 0)
-                {
                     FolderListViewContextMenuStrip.Items.AddRange(listViewStrip);
-                }
                 else if (folderListView.SelectedItems[0]?.SubItems[1]?.Text == "Folder")
-                {
                     FolderListViewContextMenuStrip.Items.AddRange(fileOrFolderStrip);
-                }
                 else if (folderListView.SelectedItems[0]?.SubItems[1]?.Text == "File")
-                {
                     FolderListViewContextMenuStrip.Items.AddRange(fileOrFolderStrip);
-                }
                 else
-                {
                     FolderListViewContextMenuStrip.Items.AddRange(listViewStrip);
-                }
             }
         }
         private void SharingsButton_Click(object sender, EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null)
-            {
-                Program.sessionInfo.LoadShares();
-                RefreshListView();
-            }
+            Program.sessionInfo.LoadShares();
+            RefreshListView();
         }
 
         #region ToolStripMenu
 
         private void DownloadToolStripMenuItem_Click(object sender, System.EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null)
-            {
-                var user = Program.sessionInfo.CurrentUser;
-                string path;
-                string owner;
-                if (Program.sessionInfo.CurrentFolder.Owner == null && Program.sessionInfo.CurrentFolder.Name == "Sharings")
-                {
-                    var str = folderListView?.SelectedItems[0]?.SubItems[0]?.Text;
-                    int pos = str.IndexOf(':');
-                    path = str.Substring(pos + 1);
-                    owner = str.Substring(0, pos);
-                }
-                else
-                {
-                    path = Program.sessionInfo.CurrentFolder.FullPath + folderListView?.SelectedItems[0]?.SubItems[0]?.Text;
-                    owner = Program.sessionInfo.CurrentFolder.Owner;
-                }
-                object down = null;
-                Type type = null;
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "Folder")
-                {
-                    down = Program.cloudConnection.GetFolder(user, owner, path + "\\");
-                    type = typeof(ClientFolder);
-                }
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "File")
-                {
-                    down = Program.cloudConnection.GetFile(user, owner, path);
-                    type = typeof(ClientFile);
-                }
-                var df = new DownloadForm(user, owner, down, type);
-                df.Show();
-            }
-        }//fix
+            if (Program.sessionInfo.CurrentFolder != null && folderListView.SelectedItems.Count == 1)
+                new DownloadForm(idDictionary[folderListView.SelectedItems[0]]).Show();
+        }
         private void CopyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null)
-            {
-                var user = Program.sessionInfo.CurrentUser;
-                string path;
-                string owner;
-                if (Program.sessionInfo.CurrentFolder.Owner == null && Program.sessionInfo.CurrentFolder.Name == "Sharings")
-                {
-                    var str = folderListView?.SelectedItems[0]?.SubItems[0]?.Text;
-                    int pos = str.IndexOf(':');
-                    path = str.Substring(pos + 1);
-                    owner = str.Substring(0, pos);
-                }
-                else
-                {
-                    path = Program.sessionInfo.CurrentFolder.FullPath + folderListView?.SelectedItems[0]?.SubItems[0]?.Text;
-                    owner = Program.sessionInfo.CurrentFolder.Owner;
-                }
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "Folder")
-                {
-                    var copy = Program.cloudConnection.GetFolder(user, owner, path + "\\");
-                    Program.sessionInfo.FillBuffer(copy, true);
-                }
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "File")
-                {
-                    var copy = Program.cloudConnection.GetFile(user, owner, path);
-                    Program.sessionInfo.FillBuffer(copy, true);
-                }
-            }
+            if (Program.sessionInfo.CurrentFolder != null && folderListView.SelectedItems.Count == 1)
+                Program.sessionInfo.FillBuffer(idDictionary[folderListView.SelectedItems[0]], true);
         }
         private void CutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null)
-            {
-                var user = Program.sessionInfo.CurrentUser;
-                string path;
-                string owner;
-                if (Program.sessionInfo.CurrentFolder.Owner == null && Program.sessionInfo.CurrentFolder.Name == "Sharings")
-                {
-                    var str = folderListView?.SelectedItems[0]?.SubItems[0]?.Text;
-                    int pos = str.IndexOf(':');
-                    path = str.Substring(pos + 1);
-                    owner = str.Substring(0, pos);
-                }
-                else
-                {
-                    path = Program.sessionInfo.CurrentFolder.FullPath + folderListView?.SelectedItems[0]?.SubItems[0]?.Text;
-                    owner = Program.sessionInfo.CurrentFolder.Owner;
-                }
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "Folder")
-                {
-                    var copy = Program.cloudConnection.GetFolder(user, owner, path + "\\");
-                    Program.sessionInfo.FillBuffer(copy, false);
-                }
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "File")
-                {
-                    var copy = Program.cloudConnection.GetFile(user, owner, path);
-                    Program.sessionInfo.FillBuffer(copy, false);
-                }
-            }
+            if (Program.sessionInfo.CurrentFolder != null && folderListView.SelectedItems.Count == 1)
+                Program.sessionInfo.FillBuffer(idDictionary[folderListView.SelectedItems[0]], false);
         }
         private void RenameToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null)
+            if (Program.sessionInfo.CurrentFolder != null && folderListView.SelectedItems.Count == 1)
             {
-                var user = Program.sessionInfo.CurrentUser;
-                string path;
-                string owner;
-                if (Program.sessionInfo.CurrentFolder.Owner == null && Program.sessionInfo.CurrentFolder.Name == "Sharings")
-                {
-                    var str = folderListView?.SelectedItems[0]?.SubItems[0]?.Text;
-                    int pos = str.IndexOf(':');
-                    path = str.Substring(pos + 1);
-                    owner = str.Substring(0, pos);
-                }
-                else
-                {
-                    path = Program.sessionInfo.CurrentFolder.FullPath + folderListView?.SelectedItems[0]?.SubItems[0]?.Text;
-                    owner = Program.sessionInfo.CurrentFolder.Owner;
-                }
-                object rna = null;
-                Type type = null;
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "Folder")
-                {
-                    rna = Program.cloudConnection.GetFolder(user, owner, path + "\\");
-                    type = typeof(ClientFolder);
-                }
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "File")
-                {
-                    rna = Program.cloudConnection.GetFile(user, owner, path);
-                    type = typeof(ClientFile);
-                }
-                var rf = new RenameForm(user, owner, rna, type);
-                rf.Show();
+                new RenameForm(idDictionary[folderListView.SelectedItems[0]]).Show();
+                RefreshListView();
             }
-
         }
         private void DeleteToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null)
+            if (Program.sessionInfo.CurrentFolder != null && folderListView.SelectedItems.Count == 1)
             {
-                var user = Program.sessionInfo.CurrentUser;
-                string path;
-                string owner;
-                if (Program.sessionInfo.CurrentFolder.Owner == null && Program.sessionInfo.CurrentFolder.Name == "Sharings")
-                {
-                    var str = folderListView?.SelectedItems[0]?.SubItems[0]?.Text;
-                    int pos = str.IndexOf(':');
-                    path = str.Substring(pos + 1);
-                    owner = str.Substring(0, pos);
-                }
-                else
-                {
-                    path = Program.sessionInfo.CurrentFolder.FullPath + folderListView?.SelectedItems[0]?.SubItems[0]?.Text;
-                    owner = Program.sessionInfo.CurrentFolder.Owner;
-                }
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "Folder")
-                {
-                    var del = Program.cloudConnection.GetFolder(user, owner, path + "\\");
-                    Program.cloudConnection.DeleteFolder(user, owner, del);
-                }
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "File")
-                {
-                    var del = Program.cloudConnection.GetFile(user, owner, path);
-                    Program.cloudConnection.DeleteFile(user, owner, del);
-                }
+                Program.sessionInfo.Delete(idDictionary[folderListView.SelectedItems[0]]);
                 RefreshListView();
             }
         }
         private void ShareToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null)
-            {
-                var path = Program.sessionInfo.CurrentFolder.FullPath + folderListView?.SelectedItems[0]?.SubItems[0]?.Text;
-                var user = Program.sessionInfo.CurrentUser;
-                var owner = Program.sessionInfo.CurrentFolder.Owner;
-                object sha = null;
-                Type type = null;
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "Folder")
-                {
-                    sha = Program.cloudConnection.GetFolder(user, owner, path + "\\");
-                    type = typeof(ClientFolder);
-                }
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "File")
-                {
-                    sha = Program.cloudConnection.GetFile(user, owner, path);
-                    type = typeof(ClientFile);
-                }
-                var ss = new ShareForm(user, owner, sha, type);
-                ss.Show();
-            }
+            if (Program.sessionInfo.CurrentFolder != null && folderListView.SelectedItems.Count == 1)
+                new ShareForm(idDictionary[folderListView.SelectedItems[0]]).Show();
         }
         private void UnshareToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -397,23 +191,8 @@ namespace HydraClient
         }
         private void UnshareAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null)
-            {
-                var path = Program.sessionInfo.CurrentFolder.FullPath + folderListView?.SelectedItems[0]?.SubItems[0]?.Text;
-                var user = Program.sessionInfo.CurrentUser;
-                var owner = Program.sessionInfo.CurrentFolder.Owner;
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "Folder")
-                {
-                    var uns = Program.cloudConnection.GetFolder(user, owner, path + "\\");
-                    Program.cloudConnection.UnshareAllFolder(user, owner, uns);
-                }
-                if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "File")
-                {
-                    var uns = Program.cloudConnection.GetFile(user, owner, path);
-                    Program.cloudConnection.UnshareAllFile(user, owner, uns);
-                }
-                RefreshListView();
-            }
+            if (Program.sessionInfo.CurrentFolder != null && folderListView.SelectedItems.Count == 1)
+                Program.sessionInfo.UnshareAll(idDictionary[folderListView.SelectedItems[0]]);
         }
         private void CreateFolderToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -421,41 +200,19 @@ namespace HydraClient
         }
         private void PasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null && Program.sessionInfo.Buffer != null)
+            if (Program.sessionInfo.CurrentFolder != null && Program.sessionInfo.BufferId != null)
             {
-                var user = Program.sessionInfo.CurrentUser;
-                var owner = Program.sessionInfo.CurrentFolder.Owner;
-                if (Program.sessionInfo.BufferType.Equals(typeof(ClientFolder)))
-                {
-                    if (Program.sessionInfo.IsCopy)
-                        Program.cloudConnection.CopyFolder(user, owner, (ClientFolder)Program.sessionInfo.Buffer, Program.sessionInfo.CurrentFolder);
-                    else
-                    {
-                        Program.cloudConnection.MoveFolder(user, owner, (ClientFolder)Program.sessionInfo.Buffer, Program.sessionInfo.CurrentFolder);
-                        Program.sessionInfo.CleanBuffer();
-                    }
-
-                }
-                if (Program.sessionInfo.BufferType.Equals(typeof(ClientFile)))
-                {
-                    if (Program.sessionInfo.IsCopy)
-                        Program.cloudConnection.CopyFile(user, owner, (ClientFile)Program.sessionInfo.Buffer, Program.sessionInfo.CurrentFolder);
-                    else
-                    {
-                        Program.cloudConnection.MoveFile(user, owner, (ClientFile)Program.sessionInfo.Buffer, Program.sessionInfo.CurrentFolder);
-                        Program.sessionInfo.CleanBuffer();
-                    }
-
-                }
+                if (Program.sessionInfo.IsCopy) 
+                    Program.sessionInfo.Copy();
+                else 
+                    Program.sessionInfo.Move();
                 RefreshListView();
             }
         }
         private void RefreshToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (Program.sessionInfo.CurrentFolder != null)
-            {
                 RefreshListView();
-            }
         }
         #endregion
 

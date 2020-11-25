@@ -1,5 +1,4 @@
-﻿using HydraClassLibrary.Cloud;
-using System;
+﻿using System;
 using System.Windows.Forms;
 
 namespace HydraClient
@@ -7,8 +6,8 @@ namespace HydraClient
     static class Program
     {
         public static SessionInfo sessionInfo = new SessionInfo();
-        public static ICloud cloudConnection = new LocalCloud();
-        //public static CloudConnection cloudConnection = new CloudConnection("127.0.0.1", 8001);
+        //public static ICloud cloudConnection = new LocalCloud();
+        public static CloudConnection cloudConnection = new CloudConnection("127.0.0.1", 8001);
         public static MainForm main;
         /// <summary>
         /// Главная точка входа для приложения.

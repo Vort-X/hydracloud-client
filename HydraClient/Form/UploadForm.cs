@@ -6,38 +6,25 @@ namespace HydraClient
 {
     public partial class UploadForm : Form
     {
-        private readonly ClientUser currentUser;
-        private readonly string owner;
-        private readonly ClientFolder cloudFolder;
-        private readonly Type type;
+        private readonly string destination;
+        private readonly string type;
 
-        public UploadForm(ClientUser currentUser, string owner, ClientFolder cloudFolder, Type type)
+        public UploadForm(string destination, string type)
         {
-            this.currentUser = currentUser;
-            this.owner = owner;
-            this.cloudFolder = cloudFolder;
+            this.destination = destination;
             this.type = type;
-            if(type.Equals(typeof(ClientFolder)))
-            {
-                Text += " folder";
-            }
-            if (type.Equals(typeof(ClientFile)))
-            {
-                Text += " file";
-            }
-
             InitializeComponent();
         }
 
         private void BrowseButton_Click(object sender, EventArgs e)
         {
-            if (type.Equals(typeof(ClientFolder)))
+            if (type == "folder")
             {
                 if (folderBrowserDialog.ShowDialog() == DialogResult.Cancel)
                     return;
                 pathTextBox.Text = folderBrowserDialog.SelectedPath;
             }
-            if (type.Equals(typeof(ClientFile)))
+            if (type == "file")
             {
                 if (openFileDialog.ShowDialog() == DialogResult.Cancel)
                     return;
@@ -47,17 +34,12 @@ namespace HydraClient
 
         private void UploadButton_Click(object sender, EventArgs e)
         {
-            if (openFileDialog.FileName == "" || openFileDialog.FileName == null)
-            {
-                MessageBox.Show("Empty path");
-            }
+            if (type == "file" && openFileDialog.FileName != "" && openFileDialog.FileName != null)
+                Program.sessionInfo.Upload(openFileDialog.FileName, destination);
+            else if (type == "folder" && folderBrowserDialog.SelectedPath != "" && folderBrowserDialog.SelectedPath != null)
+                Program.sessionInfo.Upload(folderBrowserDialog.SelectedPath, destination);
             else
-            {
-                if (type.Equals(typeof(ClientFolder)))
-                    Program.cloudConnection.UploadFolder(currentUser, owner, cloudFolder, folderBrowserDialog.SelectedPath);
-                if (type.Equals(typeof(ClientFile)))
-                    Program.cloudConnection.UploadFile(currentUser, owner, cloudFolder, openFileDialog.FileName);
-            }
+                MessageBox.Show("Empty path");
             Program.main.RefreshListView();
             Close();
         }

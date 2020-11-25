@@ -1,57 +1,116 @@
-﻿using HydraClassLibrary.ClientEntities;
-using System;
+﻿using System.Windows.Forms;
+using XmlTcpSerializables;
 
 namespace HydraClient
 {
     public class SessionInfo
     {
-        public ClientUser CurrentUser { get; private set; }
-        public ClientFolder CurrentFolder { get; private set; }
-        public object Buffer { get; private set; }
-        public Type BufferType { get; private set; }
+        public string Login { get; private set; }
+        public string Password { get; private set; }
+        public FolderInfo CurrentFolder { get; private set; }
+        public string BufferId { get; private set; }
         public bool IsCopy { get; private set; }
 
-        public void Authorize(ClientUser user)
+        #region Requests
+        public void Authorize(string login, string password)
         {
-            CurrentUser = user;
-            LoadFolder(CurrentUser.Login, "root\\");
+            Login = login;
+            Password = password;
+            var res = Program.cloudConnection?.Authorize(login, password);
+            ShowResponse(res);
+
+            LoadFolder("");
         }
-        public void ReloadFolder()
+        public void Register(string login, string password, string email)
         {
-            LoadFolder(CurrentUser.Login, CurrentFolder.FullPath);
+            Login = login;
+            Password = password;
+            var res = Program.cloudConnection?.Register(login, password, email);
+            ShowResponse(res);
+
+            LoadFolder("");
         }
-        public void LoadFolder(string owner, string path)
+
+        public void LoadFolder(string guid)
         {
-            if (owner != null && path != null && path != "")
-            {
-                var folder = Program.cloudConnection?.GetFolder(CurrentUser, owner, path);
-                CurrentFolder = folder ?? CurrentFolder;
-            }
-            else if (CurrentFolder?.Owner == null && CurrentFolder?.Name == "Sharings")
-                LoadShares();
-            else if (CurrentUser != null)
-                CurrentFolder = Program.cloudConnection?.GetFolder(CurrentUser, CurrentUser.Login, "root\\");
+            var res = Program.cloudConnection?.GetFolder(Login, Password, guid);
+            CurrentFolder = res?.folder ?? CurrentFolder;
+            ShowResponse(res);
+        }
+        public void Upload(string source, string destination)
+        {
+            //var res = Program.cloudConnection.CreateFolder(Login, Password);
+        }
+        public void Download(string source, string destination)
+        {
+            //var res = Program.cloudConnection.CreateFolder(Login, Password);
+        }
+        public void CreateFolder()
+        {
+            var res = Program.cloudConnection?.CreateFolder(Login, Password, CurrentFolder.data.guid);
+            ShowResponse(res);
+        }
+        public void Copy()
+        {
+            var res = Program.cloudConnection?.Copy(Login, Password,  BufferId, CurrentFolder.data.guid);
+            ShowResponse(res);
+        }
+        public void Move()
+        {
+            var res = Program.cloudConnection?.Move(Login, Password,  BufferId, CurrentFolder.data.guid);
+            CleanBuffer();
+            ShowResponse(res);
+        }
+        public void Rename(string ren, string newName)
+        {
+            var res = Program.cloudConnection?.Rename(Login, Password, ren, newName);
+            ShowResponse(res);
+        }
+        public void Delete(string del)
+        {
+            var res = Program.cloudConnection?.Delete(Login, Password, del);
+            ShowResponse(res);
+        }
+        public void Share(string obj, string whomToShare, bool fullAccess)
+        {
+            var res = Program.cloudConnection?.ShareUser(Login, Password, obj, whomToShare, fullAccess);
+            ShowResponse(res);
+        }
+        public void Unshare(string obj, string whomToUnshare)
+        {
+            var res = Program.cloudConnection?.UnshareUser(Login, Password, obj, whomToUnshare);
+            ShowResponse(res);
+        }
+        public void UnshareAll(string obj)
+        {
+            var res = Program.cloudConnection?.UnshareAll(Login, Password, obj);
+            ShowResponse(res);
         }
         public void LoadShares()
         {
-            CurrentFolder = Program.cloudConnection?.GetShared(CurrentUser) ?? CurrentFolder;
+            var res = Program.cloudConnection?.GetShared(Login, Password);
+            CurrentFolder = res?.folder ?? CurrentFolder;
+            ShowResponse(res);
         }
-        public void FillBuffer(ClientFolder folder, bool isCopy)
+        #endregion
+
+        public void ReloadFolder()
         {
-            Buffer = folder;
-            BufferType = folder.GetType();
+            LoadFolder(CurrentFolder.data.guid);
+        }
+        public void FillBuffer(string bufferId, bool isCopy)
+        {
+            BufferId = bufferId;
             IsCopy = isCopy;
         }
-        public void FillBuffer(ClientFile file, bool isCopy)
+        private void CleanBuffer()
         {
-            Buffer = file;
-            BufferType = file.GetType();
-            IsCopy = isCopy;
+            BufferId = null;
         }
-        public void CleanBuffer()
+        public void ShowResponse(TcpResponse res)
         {
-            Buffer = null;
-            BufferType = null;
+            if (res != null)
+            MessageBox.Show($"Status code: {res.status}", $"{res.message}\n{res.extra}");
         }
     }
 }
