@@ -145,10 +145,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\CSharp\Hydra Cloud Storage System\HydraClassLibrary\HydraClassLibrary.csproj">
-      <Project>{806c78bd-a58e-4655-a939-7ff9daa09b05}</Project>
-      <Name>HydraClassLibrary</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\..\CSharp\HydraServer\XmlTcpSerializables\XmlTcpSerializables.csproj">
       <Project>{eec51257-a94c-4187-83d3-4f3fd4920695}</Project>
       <Name>XmlTcpSerializables</Name>

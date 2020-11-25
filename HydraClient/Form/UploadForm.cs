@@ -1,5 +1,4 @@
-﻿using HydraClassLibrary.ClientEntities;
-using System;
+﻿using System;
 using System.Windows.Forms;
 
 namespace HydraClient
