@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net.Sockets;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 using XmlTcpSerializables;
 
 namespace HydraClient
@@ -11,6 +12,15 @@ namespace HydraClient
         readonly string serverAddress;
         readonly int port;
         readonly BinaryFormatter serializer = new BinaryFormatter();
+        public bool Connected
+        {
+            get
+            {
+                if (client is null)
+                    return false;
+                return client.Connected;
+            }
+        }
         TcpClient client;
         NetworkStream netStream;
 
@@ -59,12 +69,13 @@ namespace HydraClient
         public TcpResponse Download(
             string login,
             string password,
-            string folderGuid,
-            string destination) => GetResponse(new TcpRequest(login, password, "down", folderGuid, extra: destination));
+            string fileGuid,
+            string destination) => GetResponse(new TcpRequest(login, password, "down", fileGuid, extra: destination));
         public TcpResponse CreateFolder(
             string login,
             string password,
-            string parentGuid) => GetResponse(new TcpRequest(login, password, "cdir", parentGuid));
+            string parentGuid,
+            string name = null) => GetResponse(new TcpRequest(login, password, "cdir", parentGuid, extra: name));
         public TcpResponse Copy(
             string login,
             string password,
@@ -99,7 +110,7 @@ namespace HydraClient
             string login,
             string password,
             string folderGuid) => GetResponse(new TcpRequest(login, password, "unsa", folderGuid));
-        public TcpResponse GetShared(
+        public TcpResponse GetSharings(
             string login,
             string password) => GetResponse(new TcpRequest(login, password, "gets"));
         //public TcpResponse Sample(
@@ -109,24 +120,56 @@ namespace HydraClient
 
         private TcpResponse GetResponse(TcpRequest request)
         {
-            serializer.Serialize(netStream, request);
-            var response = (TcpResponse)serializer.Deserialize(netStream);
-
-            if (request.action == "upld" && response.status == 0)
+            try
             {
-                using (var stream = File.OpenRead(request.extra))
-                {
+                if (!Connected) Connect();
 
+                string filename = request.extra;
+                if (request.action.ToLower() == "upld")
+                {
+                    request.extra = new FileInfo(filename).Name;
                 }
+                serializer.Serialize(netStream, request);
+                var response = (TcpResponse)serializer.Deserialize(netStream);
+
+                if (request.action == "upld" && response.status == 0)
+                {
+                    try
+                    {
+                        using (FileStream stream = new FileStream(filename, FileMode.Open))
+                        {
+                            FileDescriptor fileDescriptor = new FileDescriptor(stream.Length);
+                            fileDescriptor.WriteData(stream);
+                            serializer.Serialize(netStream, fileDescriptor);
+                        }
+                    }
+                    finally
+                    {
+                        response = (TcpResponse)serializer.Deserialize(netStream);
+                    }
+                }
+                if (request.action == "down" && response.status == 0)
+                {
+                    try
+                    {
+                        using (FileStream stream = new FileStream(request.extra, FileMode.Create))
+                        {
+                            FileDescriptor fileDescriptor = (FileDescriptor)serializer.Deserialize(netStream);
+                            stream.Write(fileDescriptor.Data, 0, fileDescriptor.Data.Length);
+                        }
+                    }
+                    finally
+                    {
+                        response = (TcpResponse)serializer.Deserialize(netStream);
+                    }
+                }
+                return response;
             }
-            if (request.action == "down" && response.status == 0)
+            catch (IOException)
             {
-                using (var stream = File.OpenWrite(request.extra))
-                {
-
-                }
+                Disconnect();
+                return new TcpResponse(1, "Connection broke");
             }
-            return response;
         }
     }
 }

@@ -58,6 +58,9 @@
             this.uploadFileButton = new System.Windows.Forms.Button();
             this.uploadFolderButton = new System.Windows.Forms.Button();
             this.sharingsButton = new System.Windows.Forms.Button();
+            this.downloadDialog = new System.Windows.Forms.SaveFileDialog();
+            this.UploadFileDialog = new System.Windows.Forms.OpenFileDialog();
+            this.UploadFolderDialog = new System.Windows.Forms.FolderBrowserDialog();
             this.menuStrip.SuspendLayout();
             this.FolderListViewContextMenuStrip.SuspendLayout();
             this.SuspendLayout();
@@ -86,14 +89,14 @@
             // loginToolStripMenuItem
             // 
             this.loginToolStripMenuItem.Name = "loginToolStripMenuItem";
-            this.loginToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.loginToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.loginToolStripMenuItem.Text = "Login";
             this.loginToolStripMenuItem.Click += new System.EventHandler(this.LoginToolStripMenuItem_Click);
             // 
             // registerToolStripMenuItem
             // 
             this.registerToolStripMenuItem.Name = "registerToolStripMenuItem";
-            this.registerToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.registerToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.registerToolStripMenuItem.Text = "Register";
             this.registerToolStripMenuItem.Click += new System.EventHandler(this.RegisterToolStripMenuItem_Click);
             // 
@@ -152,85 +155,85 @@
             this.pasteToolStripMenuItem,
             this.refreshToolStripMenuItem});
             this.FolderListViewContextMenuStrip.Name = "FolderListViewContextMenuStrip";
-            this.FolderListViewContextMenuStrip.Size = new System.Drawing.Size(143, 246);
+            this.FolderListViewContextMenuStrip.Size = new System.Drawing.Size(181, 268);
             this.FolderListViewContextMenuStrip.Opening += new System.ComponentModel.CancelEventHandler(this.FolderListViewContextMenuStrip_Opening);
             // 
             // downloadToolStripMenuItem
             // 
             this.downloadToolStripMenuItem.Name = "downloadToolStripMenuItem";
-            this.downloadToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.downloadToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.downloadToolStripMenuItem.Text = "Download";
-            //this.downloadToolStripMenuItem.Click += new System.EventHandler(this.DownloadToolStripMenuItem_Click);
+            this.downloadToolStripMenuItem.Click += new System.EventHandler(this.DownloadToolStripMenuItem_Click);
             // 
             // copyToolStripMenuItem
             // 
             this.copyToolStripMenuItem.Name = "copyToolStripMenuItem";
-            this.copyToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.copyToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.copyToolStripMenuItem.Text = "Copy";
-            //this.copyToolStripMenuItem.Click += new System.EventHandler(this.CopyToolStripMenuItem_Click);
+            this.copyToolStripMenuItem.Click += new System.EventHandler(this.CopyToolStripMenuItem_Click);
             // 
             // cutToolStripMenuItem
             // 
             this.cutToolStripMenuItem.Name = "cutToolStripMenuItem";
-            this.cutToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.cutToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.cutToolStripMenuItem.Text = "Cut";
-            //this.cutToolStripMenuItem.Click += new System.EventHandler(this.CutToolStripMenuItem_Click);
+            this.cutToolStripMenuItem.Click += new System.EventHandler(this.CutToolStripMenuItem_Click);
             // 
             // renameToolStripMenuItem
             // 
             this.renameToolStripMenuItem.Name = "renameToolStripMenuItem";
-            this.renameToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.renameToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.renameToolStripMenuItem.Text = "Rename";
-            //this.renameToolStripMenuItem.Click += new System.EventHandler(this.RenameToolStripMenuItem_Click);
+            this.renameToolStripMenuItem.Click += new System.EventHandler(this.RenameToolStripMenuItem_Click);
             // 
             // deleteToolStripMenuItem
             // 
             this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.deleteToolStripMenuItem.Text = "Delete";
-            //this.deleteToolStripMenuItem.Click += new System.EventHandler(this.DeleteToolStripMenuItem_Click);
+            this.deleteToolStripMenuItem.Click += new System.EventHandler(this.DeleteToolStripMenuItem_Click);
             // 
             // shareToolStripMenuItem
             // 
             this.shareToolStripMenuItem.Name = "shareToolStripMenuItem";
-            this.shareToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.shareToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.shareToolStripMenuItem.Text = "Share";
-            //this.shareToolStripMenuItem.Click += new System.EventHandler(this.ShareToolStripMenuItem_Click);
+            this.shareToolStripMenuItem.Click += new System.EventHandler(this.ShareToolStripMenuItem_Click);
             // 
             // unshareToolStripMenuItem
             // 
             this.unshareToolStripMenuItem.Name = "unshareToolStripMenuItem";
-            this.unshareToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.unshareToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.unshareToolStripMenuItem.Text = "Unshare";
-            //this.unshareToolStripMenuItem.Click += new System.EventHandler(this.UnshareToolStripMenuItem_Click);
+            this.unshareToolStripMenuItem.Click += new System.EventHandler(this.UnshareToolStripMenuItem_Click);
             // 
             // unshareAllToolStripMenuItem
             // 
             this.unshareAllToolStripMenuItem.Name = "unshareAllToolStripMenuItem";
-            this.unshareAllToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.unshareAllToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.unshareAllToolStripMenuItem.Text = "Unshare all";
-            //this.unshareAllToolStripMenuItem.Click += new System.EventHandler(this.UnshareAllToolStripMenuItem_Click);
+            this.unshareAllToolStripMenuItem.Click += new System.EventHandler(this.UnshareAllToolStripMenuItem_Click);
             // 
             // createFolderToolStripMenuItem
             // 
             this.createFolderToolStripMenuItem.Name = "createFolderToolStripMenuItem";
-            this.createFolderToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.createFolderToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.createFolderToolStripMenuItem.Text = "Create folder";
-            //this.createFolderToolStripMenuItem.Click += new System.EventHandler(this.CreateFolderToolStripMenuItem_Click);
+            this.createFolderToolStripMenuItem.Click += new System.EventHandler(this.CreateFolderToolStripMenuItem_Click);
             // 
             // pasteToolStripMenuItem
             // 
             this.pasteToolStripMenuItem.Name = "pasteToolStripMenuItem";
-            this.pasteToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.pasteToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.pasteToolStripMenuItem.Text = "Paste";
-            //this.pasteToolStripMenuItem.Click += new System.EventHandler(this.PasteToolStripMenuItem_Click);
+            this.pasteToolStripMenuItem.Click += new System.EventHandler(this.PasteToolStripMenuItem_Click);
             // 
             // refreshToolStripMenuItem
             // 
             this.refreshToolStripMenuItem.Name = "refreshToolStripMenuItem";
-            this.refreshToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.refreshToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.refreshToolStripMenuItem.Text = "Refresh";
-            //this.refreshToolStripMenuItem.Click += new System.EventHandler(this.RefreshToolStripMenuItem_Click);
+            this.refreshToolStripMenuItem.Click += new System.EventHandler(this.RefreshToolStripMenuItem_Click);
             // 
             // createFolderButton
             // 
@@ -275,7 +278,7 @@
             this.uploadFileButton.TabIndex = 2;
             this.uploadFileButton.Text = "Upload File";
             this.uploadFileButton.UseVisualStyleBackColor = true;
-            //this.uploadFileButton.Click += new System.EventHandler(this.UploadFileButton_Click);
+            this.uploadFileButton.Click += new System.EventHandler(this.UploadFileButton_Click);
             // 
             // uploadFolderButton
             // 
@@ -285,7 +288,7 @@
             this.uploadFolderButton.TabIndex = 7;
             this.uploadFolderButton.Text = "Upload Folder";
             this.uploadFolderButton.UseVisualStyleBackColor = true;
-            //this.uploadFolderButton.Click += new System.EventHandler(this.UploadFolderButton_Click);
+            this.uploadFolderButton.Click += new System.EventHandler(this.UploadFolderButton_Click);
             // 
             // sharingsButton
             // 
@@ -355,6 +358,9 @@
         private System.Windows.Forms.ToolStripMenuItem refreshToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem unshareAllToolStripMenuItem;
         private System.Windows.Forms.Button sharingsButton;
+        private System.Windows.Forms.SaveFileDialog downloadDialog;
+        private System.Windows.Forms.OpenFileDialog UploadFileDialog;
+        private System.Windows.Forms.FolderBrowserDialog UploadFolderDialog;
     }
 }
 

@@ -16,6 +16,7 @@ namespace HydraClient
         private void RenameButton_Click(object sender, EventArgs e)
         {
             Program.sessionInfo.Rename(renameTarget, renameTextBox.Text);
+            Program.sessionInfo.ReloadFolder();
             Program.main.RefreshListView();
             Close();
         }

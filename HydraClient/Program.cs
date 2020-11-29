@@ -5,9 +5,7 @@ namespace HydraClient
 {
     static class Program
     {
-        public static SessionInfo sessionInfo = new SessionInfo();
-        //public static ICloud cloudConnection = new LocalCloud();
-        public static CloudConnection cloudConnection = new CloudConnection("127.0.0.1", 8001);
+        public static SessionInfo sessionInfo;
         public static MainForm main;
         /// <summary>
         /// Главная точка входа для приложения.
@@ -17,6 +15,7 @@ namespace HydraClient
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            sessionInfo = new SessionInfo(new CloudConnection("127.0.0.1", 8001));
             main = new MainForm();
             Application.Run(main);
         }

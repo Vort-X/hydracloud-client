@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
+using XmlTcpSerializables;
 
 namespace HydraClient
 {
@@ -31,11 +33,10 @@ namespace HydraClient
             idDictionary = new Dictionary<ListViewItem, string>();
         }
 
-        public void RefreshListView() //fix SubItems.Add()
+        public void RefreshListView() //extend SubItems.Add()
         {
             if (Program.sessionInfo.CurrentFolder != null)
             {
-                Program.sessionInfo.ReloadFolder();
                 folderListView.Items.Clear();
                 idDictionary.Clear();
                 var currentFolder = Program.sessionInfo.CurrentFolder;
@@ -80,19 +81,36 @@ namespace HydraClient
         }
         private void UploadFileButton_Click(object sender, EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null) new UploadForm(Program.sessionInfo.CurrentFolder.data.guid, "file").Show();
+            if (Program.sessionInfo.CurrentFolder != null)
+            {
+                if (UploadFileDialog.ShowDialog() == DialogResult.Cancel)
+                    return;
+                Program.sessionInfo.Upload(UploadFileDialog.FileName, Program.sessionInfo.CurrentFolder.data.guid, false);
+                Program.sessionInfo.ReloadFolder();
+                RefreshListView();
+            }
         }
         private void UploadFolderButton_Click(object sender, EventArgs e)
         {
-            if (Program.sessionInfo.CurrentFolder != null) new UploadForm(Program.sessionInfo.CurrentFolder.data.guid, "folder").Show();
+            if (Program.sessionInfo.CurrentFolder != null)
+            {
+                if (UploadFolderDialog.ShowDialog() == DialogResult.Cancel)
+                    return;
+                Program.sessionInfo.Upload(UploadFolderDialog.SelectedPath, Program.sessionInfo.CurrentFolder.data.guid, true);
+                Program.sessionInfo.ReloadFolder();
+                RefreshListView();
+            }
         }
-        // A voobsche nahui etu upload formu nado ubrat
         #endregion
 
         private void CreateFolderButton_Click(object sender, System.EventArgs e)
         {
-            Program.sessionInfo.CreateFolder();
-            RefreshListView();
+            if (Program.sessionInfo.CurrentFolder != null)
+            {
+                Program.sessionInfo.CreateFolder();
+                Program.sessionInfo.ReloadFolder();
+                RefreshListView();
+            }
         }
         private void FolderListView_DoubleClick(object sender, System.EventArgs e)
         {
@@ -106,7 +124,10 @@ namespace HydraClient
         {
             if (Program.sessionInfo.CurrentFolder != null)
             {
-                Program.sessionInfo.LoadFolder(Program.sessionInfo?.CurrentFolder?.data?.parentId);
+                if (Program.sessionInfo.CurrentFolder.data.parentId == Guid.Empty.ToString())
+                    Program.sessionInfo.LoadSharings();
+                else
+                    Program.sessionInfo.LoadFolder(Program.sessionInfo.CurrentFolder.data.parentId);
                 RefreshListView();
             }
         }
@@ -127,16 +148,32 @@ namespace HydraClient
         }
         private void SharingsButton_Click(object sender, EventArgs e)
         {
-            Program.sessionInfo.LoadShares();
-            RefreshListView();
+            if (Program.sessionInfo.CurrentFolder != null)
+            {
+                Program.sessionInfo.LoadSharings();
+                RefreshListView();
+            }
         }
 
         #region ToolStripMenu
 
-        private void DownloadToolStripMenuItem_Click(object sender, System.EventArgs e)
+        private void DownloadToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (Program.sessionInfo.CurrentFolder != null && folderListView.SelectedItems.Count == 1)
-                new DownloadForm(idDictionary[folderListView.SelectedItems[0]]).Show();
+            {
+                downloadDialog.FileName = folderListView.SelectedItems[0].Text;
+                if (downloadDialog.ShowDialog() == DialogResult.OK)
+                {
+                    if (downloadDialog.FileName != null && downloadDialog.FileName != "")
+                    {
+                        Program.sessionInfo.Download(idDictionary[folderListView.SelectedItems[0]], downloadDialog.FileName);
+                        Program.sessionInfo.ReloadFolder();
+                        RefreshListView();
+                    }
+                    else
+                        MessageBox.Show("Empty path");
+                }
+            }
         }
         private void CopyToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -153,7 +190,6 @@ namespace HydraClient
             if (Program.sessionInfo.CurrentFolder != null && folderListView.SelectedItems.Count == 1)
             {
                 new RenameForm(idDictionary[folderListView.SelectedItems[0]]).Show();
-                RefreshListView();
             }
         }
         private void DeleteToolStripMenuItem_Click(object sender, EventArgs e)
@@ -161,6 +197,7 @@ namespace HydraClient
             if (Program.sessionInfo.CurrentFolder != null && folderListView.SelectedItems.Count == 1)
             {
                 Program.sessionInfo.Delete(idDictionary[folderListView.SelectedItems[0]]);
+                Program.sessionInfo.ReloadFolder();
                 RefreshListView();
             }
         }
@@ -171,23 +208,26 @@ namespace HydraClient
         }
         private void UnshareToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //if (Program.sessionInfo.CurrentFolder != null)
-            //{
-            //    var path = Program.sessionInfo.CurrentFolder.FullPath + folderListView?.SelectedItems[0]?.SubItems[0]?.Text;
-            //    var user = Program.sessionInfo.CurrentUser;
-            //    var owner = Program.sessionInfo.CurrentFolder.Owner;
-            //    if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "Folder")
-            //    {
-            //        var uns = Program.cloudConnection.GetFolder(user, owner, path + "\\");
-            //        Program.cloudConnection.UnshareFolder(user, owner, uns, "");
-            //    }
-            //    if (folderListView?.SelectedItems[0]?.SubItems[1]?.Text == "File")
-            //    {
-            //        var uns = Program.cloudConnection.GetFile(user, owner, path);
-            //        Program.cloudConnection.UnshareFile(user, owner, uns, "");
-            //    }
-            //    RefreshListView();
-            //}
+            if (Program.sessionInfo.CurrentFolder != null && folderListView.SelectedItems.Count == 1)
+            {
+                string target = idDictionary[folderListView.SelectedItems[0]];
+                string[] users = null;
+                if (folderListView.SelectedItems[0].SubItems[1].Text == "Folder")
+                {
+                    users = new List<Metadata>(Program.sessionInfo.CurrentFolder.childFolders).Where(f => f.guid == target)
+                        .Select(f => f.usersWithAccess).FirstOrDefault().ToArray();
+                }
+                else if (folderListView.SelectedItems[0].SubItems[1].Text == "File")
+                {
+                    users = new List<Metadata>(Program.sessionInfo.CurrentFolder.files).Where(f => f.guid == target)
+                        .Select(f => f.usersWithAccess).FirstOrDefault().ToArray();
+                }
+                else
+                {
+                    return;
+                }
+                new UnshareForm(target, users).Show();
+            }
         }
         private void UnshareAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -206,14 +246,19 @@ namespace HydraClient
                     Program.sessionInfo.Copy();
                 else 
                     Program.sessionInfo.Move();
+                Program.sessionInfo.ReloadFolder();
                 RefreshListView();
             }
         }
         private void RefreshToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (Program.sessionInfo.CurrentFolder != null)
+            {
+                Program.sessionInfo.ReloadFolder();
                 RefreshListView();
+            }
         }
+
         #endregion
 
     }
