@@ -45,6 +45,8 @@ namespace HydraClient
                     {
                         ListViewItem listItem = new ListViewItem(folder.name);
                         listItem.SubItems.Add("Folder");
+                        listItem.SubItems.Add(folder.owner);
+                        listItem.SubItems.Add(folder.time.ToString());
                         folderListView.Items.Add(listItem);
                         idDictionary.Add(listItem, folder.guid);
                     }
@@ -53,6 +55,8 @@ namespace HydraClient
                     {
                         ListViewItem listItem = new ListViewItem(file.name);
                         listItem.SubItems.Add("File");
+                        listItem.SubItems.Add(file.owner);
+                        listItem.SubItems.Add(file.time.ToString());
                         folderListView.Items.Add(listItem);
                         idDictionary.Add(listItem, file.guid);
                     }

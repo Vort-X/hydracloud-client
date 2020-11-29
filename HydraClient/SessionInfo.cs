@@ -93,7 +93,7 @@ namespace HydraClient
                 }
                 else ShowResponse(res);
             }
-        }//fix maybe
+        }
         public void CreateFolder()
         {
             var res = connection.CreateFolder(Login, Password, CurrentFolder.data.guid);

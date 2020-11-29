@@ -170,6 +170,11 @@ namespace HydraClient
                 Disconnect();
                 return new TcpResponse(1, "Connection broke");
             }
+            catch (SocketException)
+            {
+                Disconnect();
+                return new TcpResponse(1, "Cannot establish connection with server");
+            }
         }
     }
 }
